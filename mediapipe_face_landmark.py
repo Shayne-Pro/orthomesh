@@ -84,7 +84,7 @@ with st.sidebar:
     page = st.selectbox("Navigation", ["Clinical Analysis", "About the Research"])
     if page == "Clinical Analysis":
         st.header("Clinical Settings"); protocol = st.selectbox("Analysis Protocol", ["Adult Orthodontic"], index=0, help="Standard adult orthodontic analysis protocol")
-        contrast_value = st.slider("Contrast Enhancement (Visual Only)", 1.0, 2.0, 1.2, help="Note: Fixed standardization is applied during processing. This slider is for potential future use.")
+        # contrast_value = st.slider("Contrast Enhancement (Visual Only)", 1.0, 2.0, 1.2, help="Note: Fixed standardization is applied during processing. This slider is for potential future use.")
 
 # --- Main Page Content ---
 
@@ -315,7 +315,7 @@ Facial Thirds:
   Upper: {measurements['Upper Third']:.1f}px ({thirds_ratio[0]*100:.1f}%)
   Middle: {measurements['Middle Third']:.1f}px ({thirds_ratio[1]*100:.1f}%)
   Lower: {measurements['Lower Third']:.1f}px ({thirds_ratio[2]*100:.1f}%)
-  Thirds Balance (vs Ideal): {'Balanced' if balanced_thirds else 'Imbalanced'}
+  
 
 Middle/Lower Proportion:
   Balance Status: {ml_balance_status}

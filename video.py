@@ -8,19 +8,19 @@ from collections import deque
 # Inisialisasi MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
 
-st.title("Realtime Identifikasi Landmark Wajah dengan Smoothing")
+st.title("实时面部关键点识别与平滑处理")
 
 st.markdown("""
-Fitur:
-- Deteksi landmark wajah: Trichion, Glabella, Subnasale, Menton.
-- Menggambar garis horizontal, kotak Bizygomatic, dan extended median line.
-- Menghitung deviasi dagu dan jarak facial thirds.
-- **Sliding Window Average:** Perhitungan setiap frame diakumulasi dan ditampilkan nilai rata-ratanya (misalnya, dari 30 frame).
+功能:
+- 面部关键点检测：发际点、眉心、鼻下点、颏下点。
+- 绘制水平线、颧骨盒和中线延长线。
+- 计算下巴偏斜和面部三等分距离。
+- **滑动窗口平均:** 累积每一帧的计算结果并显示平均值（例如，30帧）。
 """)
 
 # Tombol kontrol kamera
-start_button = st.button("Mulai Kamera")
-stop_button = st.button("Berhenti Kamera")
+start_button = st.button("开始摄像头")
+stop_button = st.button("停止摄像头")
 
 # Tempat untuk menampilkan frame video dan teks kalkulasi
 frame_placeholder = st.empty()
@@ -48,7 +48,7 @@ if start_button:
         while run:
             ret, frame = cap.read()
             if not ret:
-                st.error("Tidak dapat membaca stream video dari kamera.")
+                st.error("无法从摄像头读取视频流。")
                 break
 
             h, w, _ = frame.shape
@@ -174,11 +174,11 @@ if start_button:
                 angle_chin_deg = math.degrees(angle_chin)
                 angle_dev = angle_chin_deg - angle_median_deg
                 if abs(angle_dev) < 5:
-                    dev_text = "Garis median dagu hampir lurus."
+                    dev_text = "下巴中线几乎是直的。"
                 elif angle_dev > 0:
-                    dev_text = f"Dagu condong ke kanan ({angle_dev:.1f}°)."
+                    dev_text = f"下巴向右倾斜 ({angle_dev:.1f}°)."
                 else:
-                    dev_text = f"Dagu condong ke kiri ({abs(angle_dev):.1f}°)."
+                    dev_text = f"下巴向左倾斜 ({abs(angle_dev):.1f}°)."
                 calc_text += f"Chin Angle: {angle_chin_deg:.1f}° | Deviation: {angle_dev:.1f}° ({dev_text})\n"
                 cv2.putText(frame, dev_text, (10, h - 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
@@ -223,7 +223,7 @@ if start_button:
                 avg_chin_angle = np.mean(chin_angles)
                 avg_angle_dev = np.mean(angle_devs)
 
-                calc_text += "\n--- Rata-rata Sliding Window (30 frame) ---\n"
+                calc_text += "\n--- 滑动窗口平均 (30 帧) ---\n"
                 calc_text += f"Upper Third: {avg_upper:.1f} px | Middle Third: {avg_middle:.1f} px | Lower Third: {avg_lower:.1f} px\n"
                 calc_text += f"Rasio: Upper {avg_ut_ratio:.1f}%, Middle {avg_mt_ratio:.1f}%, Lower {avg_lt_ratio:.1f}%\n"
                 calc_text += f"Median Angle: {avg_median_angle:.1f}° | Chin Angle: {avg_chin_angle:.1f}° | Deviation: {avg_angle_dev:.1f}°\n"
@@ -239,6 +239,6 @@ if start_button:
                 break
 
     cap.release()
-    st.success("Kamera telah dihentikan.")
+    st.success("摄像头已停止。")
 else:
-    st.info("Klik 'Mulai Kamera' untuk memulai deteksi wajah secara realtime.")
+    st.info("点击“开始摄像头”以开始实时人脸检测。")

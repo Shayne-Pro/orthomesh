@@ -209,7 +209,8 @@ if page == "Clinical Analysis":
 
     if uploaded_file is not None:
         image = Image.open(uploaded_file).convert("RGB")
-        image_np = standardize_image(np.array(image))
+        original_image_np = np.array(image)  # 保存原始图像
+        image_np = standardize_image(original_image_np)  # 增强处理后的图像
         h, w, _ = image_np.shape
         
         with mp_face_mesh.FaceMesh(
@@ -323,7 +324,26 @@ if page == "Clinical Analysis":
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.image(output_img, caption="Clinical Analysis with Proportions", use_column_width=True)
+                    # 修改为显示原始图像，但在原始图像上绘制标记
+                    output_original_img = original_image_np.copy()
+                    
+                    # 在原始图像上绘制面部三等分线
+                    for y in [trichion[1], glabella[1], subnasale[1], menton[1]]:
+                        cv2.line(output_original_img, (0, int(y)), (w, int(y)), colors['Thirds'], 2)
+                    
+                    # 在原始图像上绘制中线
+                    cv2.line(output_original_img, 
+                            tuple(map(int, nasion)), 
+                            tuple(map(int, subnasale)), 
+                            colors['Midline'], 3)
+                    
+                    # 在原始图像上绘制标记点
+                    for name, pt in landmark_coords.items():
+                        cv2.circle(output_original_img, tuple(map(int, pt)), 8, colors['Landmarks'], -1)
+                        cv2.putText(output_original_img, name, (int(pt[0])+10, int(pt[1])-10),
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, colors['Landmarks'], 1)
+                    
+                    st.image(output_original_img, caption="Clinical Analysis with Proportions (Original Image)", use_container_width=True)
 
                 with col2:
                     report_content = f"""

@@ -2,8 +2,13 @@
 
 from pathlib import Path
 import runpy
+import sys
+
+APP_DIR = Path(__file__).resolve().parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 
 runpy.run_path(
-    str(Path(__file__).with_name("mediapipe_face_landmark_improved.py")),
+    str(APP_DIR / "mediapipe_face_landmark_improved.py"),
     run_name="__main__",
 )

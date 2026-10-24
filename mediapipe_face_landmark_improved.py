@@ -5,8 +5,11 @@ import streamlit as st
 from PIL import Image
 import json
 import os
+from pathlib import Path
+from calibration import average_offsets, update_training
 
 st.title("Improved Facial Landmark Tool")
+st.caption("Review image-space landmarks and save coordinate calibration feedback. Detector weights are not retrained.")
 
 ANALYSIS_MODE = st.selectbox("Choose Analysis Mode", ["Frontal Face", "Side Face"], index=0)
 
@@ -14,7 +17,9 @@ uploaded_file = st.file_uploader("Upload Face Image", type=["jpg", "jpeg", "png"
 
 mp_face_mesh = mp.solutions.face_mesh
 
-TRAIN_FILE = "landmark_offsets.json"
+TRAIN_FILE = os.environ.get(
+    "ORTHOMESH_FEEDBACK_PATH", str(Path(__file__).with_name("landmark_offsets.json"))
+)
 
 
 def load_training() -> dict:
@@ -25,31 +30,6 @@ def load_training() -> dict:
     return {}
 
 
-def average_offsets(data: dict) -> dict:
-    """Calculate average offset for each landmark."""
-    offsets = {}
-    for name, info in data.items():
-        count = info.get("count", 0)
-        if count:
-            sx, sy = info.get("sum", [0, 0])
-            offsets[name] = (sx / count, sy / count)
-    return offsets
-
-
-def update_training(data: dict, predicted: dict, corrected: dict) -> None:
-    """Update running sums based on user corrections."""
-    for name, pred_pt in predicted.items():
-        corr_pt = corrected.get(name, pred_pt)
-        diff_x = corr_pt[0] - pred_pt[0]
-        diff_y = corr_pt[1] - pred_pt[1]
-        if name in data:
-            data[name]["sum"][0] += diff_x
-            data[name]["sum"][1] += diff_y
-            data[name]["count"] += 1
-        else:
-            data[name] = {"sum": [diff_x, diff_y], "count": 1}
-
-
 if uploaded_file is not None:
     image = Image.open(uploaded_file).convert("RGB")
     image_np = np.array(image)
@@ -58,7 +38,7 @@ if uploaded_file is not None:
                                max_num_faces=1,
                                refine_landmarks=True,
                                min_detection_confidence=0.5) as face_mesh:
-        results = face_mesh.process(cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
+        results = face_mesh.process(image_np)
 
     if results.multi_face_landmarks:
         landmarks = results.multi_face_landmarks[0].landmark
@@ -105,11 +85,12 @@ if uploaded_file is not None:
 
         data = {"mode": ANALYSIS_MODE, "rating": rating, "points": adjusted_points}
         json_str = json.dumps(data, indent=2)
-        if st.button("Save Feedback & Train"):
-            update_training(training_data, auto_points, adjusted_points)
+        if st.button("Save calibration feedback"):
+            update_training(training_data, raw_points, adjusted_points)
+            Path(TRAIN_FILE).parent.mkdir(parents=True, exist_ok=True)
             with open(TRAIN_FILE, "w") as f:
                 json.dump(training_data, f, indent=2)
-            st.success("Feedback saved. Model updated!")
+            st.success("Calibration offsets saved. MediaPipe weights are unchanged.")
         st.download_button("Download Points JSON", json_str, "landmarks.json", "application/json")
     else:
         st.error("Face not detected. Please try another image.")
